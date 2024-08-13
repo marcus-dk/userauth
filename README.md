@@ -8,7 +8,8 @@ built with help of gpt</p>
 ### features
 <p>persistent storage with json<br>
 registration, login, listing, health check and more<br>
-Automated test for API (not yet passed on all :P)</p>
+Automated test for API (not yet passed on all :P)<br>
+Graceful shutdown (useful for running development, listens for [^C])</p>
 
 ---
 

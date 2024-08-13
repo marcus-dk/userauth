@@ -1,21 +1,18 @@
 # userauth - A user authentication API in Go
 ## by marcusS
 <p>building a user authentication api with go<br>
-built with help of gpt</p>
+built with help of llms</p>
 
 ---
 
 ### features
 <p>persistent storage with json<br>
-registration, login, listing, health check and more<br>
-Automated test for API (not yet passed on all :P)<br>
+registration, login, updating, deletion, listing of all and specific users, token auth, health check and more<br>
+Automated test for API<br>
 Graceful shutdown (useful for running development, listens for [^C])</p>
 
 ---
 
 #### todo:
-<p>fix bug with Invalid Credentials when logging in<br>
-pass automated test<br>
-expand on capabilities<br>
-improve security<br>
-finish updating and deleting users</p>
+<p>
+expand capabilities further</p>

@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	"log"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -13,6 +14,8 @@ var (
 	filePath = "data/users.json"
 	mutex    = &sync.Mutex{}
 )
+
+var ErrUserNotFound = errors.New("user not found")
 
 func init() {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -28,33 +31,36 @@ func init() {
 }
 
 func readFromFile() ([]models.User, error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+    mutex.Lock()
+    defer mutex.Unlock()
 
-	file, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
+    file, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        return nil, err
+    }
 
-	var users []models.User
-	err = json.Unmarshal(file, &users)
-	if err != nil {
-		return nil, err
-	}
+    log.Printf("Read from file: %s", string(file))
 
-	return users, nil
+    var users []models.User
+    err = json.Unmarshal(file, &users)
+    if err != nil {
+        return nil, err
+    }
+
+    return users, nil
 }
 
 func writeToFile(users []models.User) error {
-	mutex.Lock()
-	defer mutex.Unlock()
+    mutex.Lock()
+    defer mutex.Unlock()
 
-	data, err := json.MarshalIndent(users, "", "  ")
-	if err != nil {
-		return err
-	}
+    data, err := json.MarshalIndent(users, "", "  ")
+    if err != nil {
+        return err
+    }
 
-	return ioutil.WriteFile(filePath, data, 0644)
+    log.Printf("Writing to file: %s", string(data))
+    return ioutil.WriteFile(filePath, data, 0644)
 }
 
 func GetUsers() ([]models.User, error) {
@@ -62,45 +68,51 @@ func GetUsers() ([]models.User, error) {
 }
 
 func AddUser(user models.User) (models.User, error) {
-	users, err := readFromFile()
-	if err != nil {
-		return models.User{}, err
-	}
+    log.Printf("Adding user: %+v", user)
+    users, err := readFromFile()
+    if err != nil {
+        log.Printf("Error reading from file: %v", err)
+        return models.User{}, err
+    }
 
-	for _, u := range users {
-		if u.Email == user.Email {
-			return models.User{}, errors.New("user already exists")
-		}
-	}
+    for _, u := range users {
+        if u.Email == user.Email {
+            return models.User{}, errors.New("user already exists")
+        }
+    }
 
-	if len(users) > 0 {
-		user.ID = users[len(users)-1].ID + 1
-	} else {
-		user.ID = 1
-	}
+    if len(users) > 0 {
+        user.ID = users[len(users)-1].ID + 1
+    } else {
+        user.ID = 1
+    }
 
-	users = append(users, user)
-	err = writeToFile(users)
-	if err != nil {
-		return models.User{}, err
-	}
+    users = append(users, user)
+    err = writeToFile(users)
+    if err != nil {
+        log.Printf("Error writing to file: %v", err)
+        return models.User{}, err
+    }
 
-	return user, nil
+    log.Printf("User added successfully: %+v", user)
+    return user, nil
 }
 
 func GetUserByEmail(email string) (models.User, error) {
-	users, err := readFromFile()
-	if err != nil {
-		return models.User{}, err
-	}
+    users, err := readFromFile()
+    if err != nil {
+        return models.User{}, err
+    }
 
-	for _, u := range users {
-		if u.Email == email {
-			return u, nil
-		}
-	}
+    for _, u := range users {
+        if u.Email == email {
+            log.Printf("Retrieved user with email: %s", email)
+            log.Printf("Retrieved user with password hash length: %d", len(u.Password))
+            return u, nil
+        }
+    }
 
-	return models.User{}, errors.New("user not found")
+    return models.User{}, ErrUserNotFound
 }
 
 func GetUserByID(id uint) (models.User, error) {

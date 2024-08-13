@@ -48,33 +48,46 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id := models.ParseID(mux.Vars(r)["id"])
+    id := models.ParseID(mux.Vars(r)["id"])
 
-	var updatedUser models.User
-	err := json.NewDecoder(r.Body).Decode(&updatedUser)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
+    var updatedUser models.User
+    err := json.NewDecoder(r.Body).Decode(&updatedUser)
+    if err != nil {
+        http.Error(w, "Invalid input", http.StatusBadRequest)
+        return
+    }
 
-	updatedUser, err = controllers.UpdateUser(id, updatedUser)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
+    // Set the ID from the URL to ensure it's updated correctly
+    updatedUser.ID = id
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(updatedUser)
+    updatedUser, err = controllers.UpdateUser(id, updatedUser)
+    if err != nil {
+        switch err {
+        case controllers.ErrUserNotFound:
+            http.Error(w, "User not found", http.StatusNotFound)
+        default:
+            http.Error(w, "Failed to update user", http.StatusInternalServerError)
+        }
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(updatedUser)
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	id := models.ParseID(mux.Vars(r)["id"])
+    id := models.ParseID(mux.Vars(r)["id"])
 
-	err := controllers.DeleteUser(id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
+    err := controllers.DeleteUser(id)
+    if err != nil {
+        switch err {
+        case controllers.ErrUserNotFound:
+            http.Error(w, "User not found", http.StatusNotFound)
+        default:
+            http.Error(w, "Failed to delete user", http.StatusInternalServerError)
+        }
+        return
+    }
 
-	w.WriteHeader(http.StatusNoContent)
+    w.WriteHeader(http.StatusNoContent)
 }
